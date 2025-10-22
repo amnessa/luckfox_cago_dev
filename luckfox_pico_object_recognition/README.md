@@ -1,34 +1,33 @@
-![luckfox](https://github.com/LuckfoxTECH/luckfox-pico/assets/144299491/cec5c4a5-22b9-4a9a-abb1-704b11651e88)
 # Luckfox Pico RKMPI example
-[中文](./README_CN.md)
+
 + This example is based on RKMPI and Opencv-Mobile for image encoding and streaming.
 + This example uses RKNN for image recognition inference.
 + Example code for video capture and streaming specifically developed for Luckfox Pico series development boards.
 
 ## Implementation Results
-### luckfox_pico_rtsp_opencv   
+### luckfox_pico_rtsp_opencv
 <img src="images/luckfox_pico_rtsp_opencv.jpg" alt="luckfox_pico_rtsp_opencv" width="300">
 
 ### luckfox_pico_rtsp_opencv_capture
 <img src="images/luckfox_pico_rtsp_opencv_capture.jpg" alt="luckfox_pico_rtsp_opencv_capture" width="300">
 
-### luckfox_pico_rtsp_retinaface   
+### luckfox_pico_rtsp_retinaface
 <img src="images/luckfox_pico_rtsp_retinaface.jpg" alt="luckfox_pico_rtsp_retinaface" width="300">
 
-### luckfox_pico_rtsp_retinaface_osd 
+### luckfox_pico_rtsp_retinaface_osd
 <img src="images/luckfox_pico_rtsp_retinaface_osd.jpg" alt="luckfox_pico_rtsp_retinaface_osd" width="300">
 
-### luckfox_pico_rtsp_yolov5        
+### luckfox_pico_rtsp_yolov5
 <img src="images/luckfox_pico_rtsp_yolov5.jpg" alt="luckfox_pico_rtsp_yolov5" width="300">
 
 ## Platform Support
  DEMO                           | CPU | system | Camera |
 ------------------------------- | --- | ---- | ------- |
 luckfox_pico_rtsp_opencv        | RV1103(resolution adjustment required),rv1106 | buildroot | sc3336
-luckfox_pico_rtsp_opencv_capture| RV1103,RV1106 | buildroot | sc3336 
-luckfox_pico_rtsp_retinaface    | RV1103,RV1106 | buildroot | sc3336 
-luckfox_pico_rtsp_retinaface_osd| RV1103,RV1106 | buildroot | sc3336 
-luckfox_pico_rtsp_yolov5        | RV1106        | buildroot | sc3336 
+luckfox_pico_rtsp_opencv_capture| RV1103,RV1106 | buildroot | sc3336
+luckfox_pico_rtsp_retinaface    | RV1103,RV1106 | buildroot | sc3336
+luckfox_pico_rtsp_retinaface_osd| RV1103,RV1106 | buildroot | sc3336
+luckfox_pico_rtsp_yolov5        | RV1106        | buildroot | sc3336
 
 + **RV1103**:`Luckfox Pico` `Luckfox Pico Mini A` `Luckfpx Pico Miini B` `Luckfox Pico Plus`
 + **RV1106**:`Luckfox Pico Pro` `Luckfox Pico Max` `Luckfox Pico Ultra` `Luckfox Pico Ultra W`
@@ -66,10 +65,10 @@ luckfox_pico_rtsp_yolov5        | RV1106        | buildroot | sc3336
 ## Running
 + After compilation, the corresponding deployment folder will be generated in the install directory
     ```
-    luckfox_pico_rtsp_opencv_capture_demo  
+    luckfox_pico_rtsp_opencv_capture_demo
     luckfox_pico_rtsp_retinaface_demo
     luckfox_pico_rtsp_yolov5_demo
-    luckfox_pico_rtsp_opencv_demo          
+    luckfox_pico_rtsp_opencv_demo
     luckfox_pico_rtsp_retinaface_osd_demo
     ```
 + Upload the generated deployment folder to the Luckfox Pico (using adb, ssh, etc.). On the board, enter the folder and run the demo
