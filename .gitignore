@@ -1,3 +1,14 @@
 luckfox_pico_lvgl_example
 luckfox_pico_rkmpi_example
 luckfox_pico_rknn_example
+# Build/Install outputs
+**/build/
+**/install/
+**/CMakeFiles/
+**/CMakeCache.txt
+**/cmake_install.cmake
+**/Makefile
+# IDE/temp
+*.swp
+*.tmp
+.DS_Store
