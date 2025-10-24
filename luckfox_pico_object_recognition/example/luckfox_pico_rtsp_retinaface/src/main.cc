@@ -26,34 +26,38 @@
 
 int main(int argc, char *argv[]) {
   system("RkLunch-stop.sh");
-	RK_S32 s32Ret = 0; 
+	RK_S32 s32Ret = 0;
 
 	int width    = DISP_WIDTH;
     int height   = DISP_HEIGHT;
 
 	int model_width = 640;
 	int model_height = 640;
-		
-	float scale_x = (float)width / (float)model_width;  
-	float scale_y = (float)height / (float)model_height;   
+
+	float scale_x = (float)width / (float)model_width;
+	float scale_y = (float)height / (float)model_height;
 	int sX,sY,eX,eY;
-    
+
+// Add frame center
+    int center_x = width / 2;   // 360
+    int center_y = height / 2;  // 240
+
 	// Rknn model
-	rknn_app_context_t rknn_app_ctx;	
+	rknn_app_context_t rknn_app_ctx;
 	object_detect_result_list od_results;
 	const char *model_path = "./model/retinaface.rknn";
-    memset(&rknn_app_ctx, 0, sizeof(rknn_app_context_t));	
+    memset(&rknn_app_ctx, 0, sizeof(rknn_app_context_t));
     if(init_retinaface_model(model_path, &rknn_app_ctx) != RK_SUCCESS)
 	{
 		RK_LOGE("rknn model init fail!");
 		return -1;
 	}
 
-	//h264_frame	
-	VENC_STREAM_S stFrame;	
+	//h264_frame
+	VENC_STREAM_S stFrame;
 	stFrame.pstPack = (VENC_PACK_S *)malloc(sizeof(VENC_PACK_S));
 	RK_U64 H264_PTS = 0;
-	RK_U32 H264_TimeRef = 0; 
+	RK_U32 H264_TimeRef = 0;
 	VIDEO_FRAME_INFO_S stViFrame;
 
 	// Create Pool
@@ -64,25 +68,25 @@ int main(int argc, char *argv[]) {
 	PoolCfg.enAllocType = MB_ALLOC_TYPE_DMA;
 	//PoolCfg.bPreAlloc = RK_FALSE;
 	MB_POOL src_Pool = RK_MPI_MB_CreatePool(&PoolCfg);
-	printf("Create Pool success !\n");	
+	printf("Create Pool success !\n");
 
-	// Get MB from Pool 
+	// Get MB from Pool
 	MB_BLK src_Blk = RK_MPI_MB_GetMB(src_Pool, width * height * 3, RK_TRUE);
-	
+
 	// Build h264_frame
 	VIDEO_FRAME_INFO_S h264_frame;
 	h264_frame.stVFrame.u32Width = width;
 	h264_frame.stVFrame.u32Height = height;
 	h264_frame.stVFrame.u32VirWidth = width;
 	h264_frame.stVFrame.u32VirHeight = height;
-	h264_frame.stVFrame.enPixelFormat =  RK_FMT_RGB888; 
+	h264_frame.stVFrame.enPixelFormat =  RK_FMT_RGB888;
 	h264_frame.stVFrame.u32FrameFlag = 160;
 	h264_frame.stVFrame.pMbBlk = src_Blk;
 	unsigned char *data = (unsigned char *)RK_MPI_MB_Handle2VirAddr(src_Blk);
 	cv::Mat frame(cv::Size(width,height),CV_8UC3,data);
-	
+
 	// rkaiq init
-	RK_BOOL multi_sensor = RK_FALSE;	
+	RK_BOOL multi_sensor = RK_FALSE;
 	const char *iq_dir = "/etc/iqfiles";
 	rk_aiq_working_mode_t hdr_mode = RK_AIQ_WORKING_MODE_NORMAL;
 	//hdr_mode = RK_AIQ_WORKING_MODE_ISP_HDR2;
@@ -95,14 +99,14 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
 
-	// rtsp init	
+	// rtsp init
 	rtsp_demo_handle g_rtsplive = NULL;
 	rtsp_session_handle g_rtsp_session;
 	g_rtsplive = create_rtsp_demo(554);
 	g_rtsp_session = rtsp_new_session(g_rtsplive, "/live/0");
 	rtsp_set_video(g_rtsp_session, RTSP_CODEC_ID_VIDEO_H264, NULL, 0);
 	rtsp_sync_video_ts(g_rtsp_session, rtsp_get_reltime(), rtsp_get_ntptime());
-	
+
 	// vi init
 	vi_dev_init();
 	vi_chn_init(0, width, height);
@@ -110,59 +114,67 @@ int main(int argc, char *argv[]) {
 	// venc init
 	RK_CODEC_ID_E enCodecType = RK_VIDEO_ID_AVC;
 	venc_init(0, width, height, enCodecType);
-	
-	printf("init success\n");	
-	
+
+	printf("init success\n");
+
 	while(1)
-	{	
+	{
 		// get vi frame
 		h264_frame.stVFrame.u32TimeRef = H264_TimeRef++;
-		h264_frame.stVFrame.u64PTS = TEST_COMM_GetNowUs(); 
+		h264_frame.stVFrame.u64PTS = TEST_COMM_GetNowUs();
 		s32Ret = RK_MPI_VI_GetChnFrame(0, 0, &stViFrame, -1);
 		if(s32Ret == RK_SUCCESS)
 		{
 			void *vi_data = RK_MPI_MB_Handle2VirAddr(stViFrame.stVFrame.pMbBlk);
-		
+
 			cv::Mat yuv420sp(height + height / 2, width, CV_8UC1, vi_data);
-			cv::Mat bgr(height, width, CV_8UC3, data);			
-			cv::Mat model_bgr(model_height, model_width, CV_8UC3);			
-			
+			cv::Mat bgr(height, width, CV_8UC3, data);
+			cv::Mat model_bgr(model_height, model_width, CV_8UC3);
+
 			cv::cvtColor(yuv420sp, bgr, cv::COLOR_YUV420sp2BGR);
 			cv::resize(bgr, frame, cv::Size(width ,height), 0, 0, cv::INTER_LINEAR);
-			
-			cv::resize(bgr, model_bgr, cv::Size(model_width ,model_height), 0, 0, cv::INTER_LINEAR);	
+
+			cv::resize(bgr, model_bgr, cv::Size(model_width ,model_height), 0, 0, cv::INTER_LINEAR);
 			memcpy(rknn_app_ctx.input_mems[0]->virt_addr, model_bgr.data, model_width * model_height * 3);
 			inference_retinaface_model(&rknn_app_ctx, &od_results);
-			
+
 			for(int i = 0; i < od_results.count; i++)
-			{					
+			{
 				if(od_results.count >= 1)
 				{
 					object_detect_result *det_result = &(od_results.results[i]);
-							
-					sX = (int)((float)det_result->box.left 	 *scale_x);	
-					sY = (int)((float)det_result->box.top 	 *scale_y);	
-					eX = (int)((float)det_result->box.right  *scale_x);	
-					eY = (int)((float)det_result->box.bottom *scale_y);	
+
+					sX = (int)((float)det_result->box.left 	 *scale_x);
+					sY = (int)((float)det_result->box.top 	 *scale_y);
+					eX = (int)((float)det_result->box.right  *scale_x);
+					eY = (int)((float)det_result->box.bottom *scale_y);
 					printf("%d %d %d %d\n",sX,sY,eX,eY);
-					cv::rectangle(frame,cv::Point(sX,sY),
-								  cv::Point(eX,eY),cv::Scalar(0,255,0),3);
+
+                    // Compute bbox center and distance from frame center
+                    int cX = (sX + eX) / 2;
+                    int cY = (sY + eY) / 2;
+                    int dx = cX - center_x;
+                    int dy = cY - center_y;
+                    printf("distance: %d , %d\n", dx, dy);
+
+                    cv::rectangle(frame,cv::Point(sX,sY),
+                                  cv::Point(eX,eY),cv::Scalar(0,255,0),3);
 				}
 			}
-			
+
 		}
 		memcpy(data, frame.data, width * height * 3);
 
 		// encode H264
 		RK_MPI_VENC_SendFrame(0,  &h264_frame ,-1);
-		
+
 		// rtsp
 		s32Ret = RK_MPI_VENC_GetStream(0, &stFrame, -1);
 		if(s32Ret == RK_SUCCESS)
 		{
 			if(g_rtsplive && g_rtsp_session)
 			{
-				//printf("len = %d PTS = %d \n",stFrame.pstPack->u32Len, stFrame.pstPack->u64PTS);				
+				//printf("len = %d PTS = %d \n",stFrame.pstPack->u32Len, stFrame.pstPack->u64PTS);
 				void *pData = RK_MPI_MB_Handle2VirAddr(stFrame.pstPack->pMbBlk);
 				rtsp_tx_video(g_rtsp_session, (uint8_t *)pData, stFrame.pstPack->u32Len,
 							  stFrame.pstPack->u64PTS);
@@ -170,7 +182,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		// release frame 
+		// release frame
 		s32Ret = RK_MPI_VI_ReleaseChnFrame(0, 0, &stViFrame);
 		if (s32Ret != RK_SUCCESS) {
 			RK_LOGE("RK_MPI_VI_ReleaseChnFrame fail %x", s32Ret);
@@ -181,17 +193,17 @@ int main(int argc, char *argv[]) {
 		}
 
 	}
-	
+
 	// Destory MB
 	RK_MPI_MB_ReleaseMB(src_Blk);
 	// Destory Pool
 	RK_MPI_MB_DestroyPool(src_Pool);
-	
+
 	RK_MPI_VI_DisableChn(0, 0);
 	RK_MPI_VI_DisableDev(0);
-	
+
 	SAMPLE_COMM_ISP_Stop(0);
-		
+
 	RK_MPI_VENC_StopRecvFrame(0);
 	RK_MPI_VENC_DestroyChn(0);
 
@@ -202,6 +214,8 @@ int main(int argc, char *argv[]) {
 
 	RK_MPI_SYS_Exit();
 	// Release rknn model
-    release_retinaface_model(&rknn_app_ctx);	
+    release_retinaface_model(&rknn_app_ctx);
 	return 0;
 }
+
+//TODO: add fps metric
