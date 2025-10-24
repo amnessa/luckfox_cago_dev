@@ -181,3 +181,4 @@ int main(int argc, char *argv[]) {
   deinit_post_process();
   return 0;
 }
+//TODO: add fps metric, choose single tag to follow and draw distance from center.
